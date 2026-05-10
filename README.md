@@ -4,9 +4,9 @@
 
 This project builds a FastAPI service for customer churn prediction.
 
-The goal is to convert a trained machine learning model into a usable prediction API with input validation, clear response structure, reproducible model training, and automated API tests.
+The goal is to convert a trained machine learning model into a usable prediction API with input validation, clear response structure, reproducible model training, automated API tests, and Docker-based execution.
 
-This project demonstrates the full path from raw customer data to cleaned training data, trained model artifact, API endpoint, and validated prediction response.
+This project demonstrates the full path from raw customer data to cleaned training data, trained model artifact, API endpoint, validated prediction response, and containerized service execution.
 
 ---
 
@@ -29,7 +29,8 @@ The API returns not only a churn prediction, but also a churn probability, risk 
 - Return churn probability, prediction, risk level, and explanation.
 - Add health and metadata endpoints.
 - Add automated API tests.
-- Document local usage and reproducibility.
+- Add Docker support for local containerized execution.
+- Document local usage, Docker usage, and reproducibility.
 
 ---
 
@@ -94,6 +95,8 @@ customer-churn-prediction-api/
 ├── tests/
 │   ├── conftest.py
 │   └── test_api.py
+├── .dockerignore
+├── Dockerfile
 ├── README.md
 ├── requirements.txt
 └── .gitignore
@@ -392,9 +395,101 @@ http://127.0.0.1:8000/docs
 
 ---
 
+## Docker Usage
+
+This project can also run inside a Docker container.
+
+Before building the image, train the model locally so the required model artifacts exist:
+
+```bash
+python src/train_model.py
+```
+
+The Docker image copies the local `models/` directory into the container.
+
+### Build Docker image
+
+Recommended command for Docker Desktop environments:
+
+```bash
+docker buildx build --load -t customer-churn-prediction-api:local .
+```
+
+Alternative command:
+
+```bash
+docker build -t customer-churn-prediction-api:local .
+```
+
+If `docker run` cannot find the image after using `docker build`, use the `buildx --load` command.
+
+### Verify local image
+
+```bash
+docker image ls | findstr customer
+```
+
+Expected image name:
+
+```text
+customer-churn-prediction-api:local
+```
+
+### Run Docker container
+
+```bash
+docker run --rm -p 8000:8000 customer-churn-prediction-api:local
+```
+
+Open the API docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Test health endpoint
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/health" `
+  -Method Get
+```
+
+Expected response:
+
+```text
+status: ok
+model_available: True
+model_name: gradient_boosting_churn_pipeline
+decision_threshold: 0.24
+```
+
+### Test prediction endpoint
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/predict" `
+  -Method Post `
+  -ContentType "application/json" `
+  -InFile "examples/sample_request.json"
+```
+
+Expected response fields:
+
+```text
+churn_probability
+prediction
+prediction_label
+risk_level
+decision_threshold
+explanation
+```
+
+---
+
 ## PowerShell Prediction Example
 
-With the API running:
+With the API running locally or inside Docker:
 
 ```powershell
 Invoke-RestMethod `
@@ -455,6 +550,41 @@ Then test the API using Swagger or PowerShell.
 
 ---
 
+## Docker Reproducibility Check
+
+After the local model is trained, run:
+
+```bash
+docker buildx build --load -t customer-churn-prediction-api:local .
+docker image ls | findstr customer
+docker run --rm -p 8000:8000 customer-churn-prediction-api:local
+```
+
+In another terminal:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/health" `
+  -Method Get
+```
+
+Then:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/predict" `
+  -Method Post `
+  -ContentType "application/json" `
+  -InFile "examples/sample_request.json"
+```
+
+Expected result:
+
+- `/health` returns `status: ok`;
+- `/predict` returns churn probability, prediction label, risk level, threshold, and explanation.
+
+---
+
 ## Tools Used
 
 - Python
@@ -467,6 +597,7 @@ Then test the API using Swagger or PowerShell.
 - Uvicorn
 - pytest
 - httpx
+- Docker
 - Git
 - GitHub
 
@@ -494,6 +625,12 @@ The threshold prioritizes recall for retention use cases. The goal is to flag mo
 
 Model artifacts and processed data are generated locally and ignored by Git. This keeps the repository lightweight and forces reproducibility from source data.
 
+### Why Docker?
+
+Docker packages the API runtime, Python dependencies, application code, examples, and locally trained model artifacts into a container image.
+
+This makes the service easier to run outside the original development environment.
+
 ---
 
 ## Limitations
@@ -503,6 +640,7 @@ Model artifacts and processed data are generated locally and ignored by Git. Thi
 - The explanation field is rule-based and not a formal model interpretability method.
 - The current API predicts one customer per request.
 - The model artifact must be generated locally before serving predictions.
+- The Docker image copies local model artifacts; it does not train the model during image build.
 - There is no authentication, logging, monitoring, or database integration in this version.
 - The model should be retrained and validated before use in a real business environment.
 
@@ -513,14 +651,15 @@ Model artifacts and processed data are generated locally and ignored by Git. Thi
 Possible extensions:
 
 - add batch prediction endpoint,
-- add Docker support,
+- add Docker Compose support,
 - deploy to a cloud service,
 - add model versioning,
 - add SHAP-based explanations,
 - add request logging,
 - add monitoring for data drift,
 - add CI workflow for tests,
-- add authentication for private deployment.
+- add authentication for private deployment,
+- optimize Docker image size.
 
 ---
 
@@ -532,4 +671,4 @@ La API convierte un modelo de machine learning entrenado en un servicio local us
 
 El modelo usa Gradient Boosting con un pipeline reproducible de scikit-learn. El umbral de decisión es 0.24, priorizando recall para capturar más clientes en riesgo.
 
-El proyecto incluye entrenamiento reproducible, validación de inputs con Pydantic, endpoints `/health`, `/metadata` y `/predict`, pruebas automatizadas con pytest y ejemplos de request/response.
+El proyecto incluye entrenamiento reproducible, validación de inputs con Pydantic, endpoints `/health`, `/metadata` y `/predict`, pruebas automatizadas con pytest, ejemplos de request/response y ejecución local con Docker.
