@@ -4,9 +4,9 @@
 
 This project builds a FastAPI service for customer churn prediction.
 
-The goal is to convert a trained machine learning model into a usable prediction API with input validation, clear response structure, reproducible model training, automated API tests, and Docker-based execution.
+The goal is to convert a trained machine learning model into a usable prediction API with input validation, clear response structure, reproducible model training, automated API tests, Docker-based execution, and continuous integration.
 
-This project demonstrates the full path from raw customer data to cleaned training data, trained model artifact, API endpoint, validated prediction response, and containerized service execution.
+This project demonstrates the full path from raw customer data to cleaned training data, trained model artifact, API endpoint, validated prediction response, containerized service execution, and CI validation.
 
 ---
 
@@ -30,7 +30,8 @@ The API returns not only a churn prediction, but also a churn probability, risk 
 - Add health and metadata endpoints.
 - Add automated API tests.
 - Add Docker support for local containerized execution.
-- Document local usage, Docker usage, and reproducibility.
+- Add GitHub Actions CI for automated validation.
+- Document local usage, Docker usage, CI workflow, and reproducibility.
 
 ---
 
@@ -78,6 +79,9 @@ Raw data is not included in this repository. Place `telco_customer_churn.csv` in
 
 ```text
 customer-churn-prediction-api/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── app/
 │   ├── __init__.py
 │   ├── main.py
@@ -524,14 +528,44 @@ Current test coverage includes:
 
 - root endpoint,
 - health endpoint,
+- metadata endpoint,
 - prediction endpoint,
 - invalid request validation.
 
 Expected result:
 
 ```text
-4 passed
+5 passed
 ```
+
+---
+
+## Continuous Integration
+
+This project includes a GitHub Actions CI workflow.
+
+The workflow runs automatically on:
+
+- pushes to `main`,
+- pull requests targeting `main`.
+
+The CI job performs:
+
+- repository checkout,
+- Python setup,
+- dependency installation,
+- Python file compilation,
+- automated API tests with pytest.
+
+Workflow file:
+
+```text
+.github/workflows/ci.yml
+```
+
+The API tests use mocked model responses so CI can validate the API contract without requiring local model artifacts.
+
+This keeps the repository lightweight while still verifying that the FastAPI endpoints, schemas, and validation logic work correctly.
 
 ---
 
@@ -598,6 +632,7 @@ Expected result:
 - pytest
 - httpx
 - Docker
+- GitHub Actions
 - Git
 - GitHub
 
@@ -631,6 +666,12 @@ Docker packages the API runtime, Python dependencies, application code, examples
 
 This makes the service easier to run outside the original development environment.
 
+### Why GitHub Actions?
+
+GitHub Actions automatically validates the API contract on every push and pull request to `main`.
+
+The workflow does not require local model artifacts because CI uses mocked model responses in the API tests.
+
 ---
 
 ## Limitations
@@ -641,6 +682,7 @@ This makes the service easier to run outside the original development environmen
 - The current API predicts one customer per request.
 - The model artifact must be generated locally before serving predictions.
 - The Docker image copies local model artifacts; it does not train the model during image build.
+- CI validates the API contract with mocked model responses; full model inference is validated locally or through Docker.
 - There is no authentication, logging, monitoring, or database integration in this version.
 - The model should be retrained and validated before use in a real business environment.
 
@@ -653,11 +695,11 @@ Possible extensions:
 - add batch prediction endpoint,
 - add Docker Compose support,
 - deploy to a cloud service,
+- add Docker image publishing workflow,
 - add model versioning,
 - add SHAP-based explanations,
 - add request logging,
 - add monitoring for data drift,
-- add CI workflow for tests,
 - add authentication for private deployment,
 - optimize Docker image size.
 
@@ -671,4 +713,4 @@ La API convierte un modelo de machine learning entrenado en un servicio local us
 
 El modelo usa Gradient Boosting con un pipeline reproducible de scikit-learn. El umbral de decisión es 0.24, priorizando recall para capturar más clientes en riesgo.
 
-El proyecto incluye entrenamiento reproducible, validación de inputs con Pydantic, endpoints `/health`, `/metadata` y `/predict`, pruebas automatizadas con pytest, ejemplos de request/response y ejecución local con Docker.
+El proyecto incluye entrenamiento reproducible, validación de inputs con Pydantic, endpoints `/health`, `/metadata` y `/predict`, pruebas automatizadas con pytest, ejemplos de request/response, ejecución local con Docker y CI con GitHub Actions.
