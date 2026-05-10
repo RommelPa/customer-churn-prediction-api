@@ -1,0 +1,16 @@
+{
+  "churn_probability": 0.405,
+  "prediction": 1,
+  "prediction_label": "Churn",
+  "risk_level": "Medium",
+  "decision_threshold": 0.24,
+  "explanation": [
+    "Month-to-month contract increases churn risk.",
+    "Low tenure indicates an early-life customer risk.",
+    "No online security is associated with higher churn risk.",
+    "No tech support is associated with higher churn risk.",
+    "Electronic check payment method is associated with higher churn risk.",
+    "Paperless billing is associated with higher churn tendency.",
+    "Predicted churn probability is 0.405; decision threshold is 0.24."
+  ]
+}
