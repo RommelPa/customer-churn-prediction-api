@@ -1,0 +1,27 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Raw and processed data
+data/raw/*
+data/processed/*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Docs not needed in runtime
+README.md
